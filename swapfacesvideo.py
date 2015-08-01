@@ -49,6 +49,7 @@ import numpy
 
 import sys
 import glob
+import shutil
 
 PREDICTOR_PATH = "../shape_predictor_68_face_landmarks.dat"
 SCALE_FACTOR = 1 
@@ -87,27 +88,6 @@ class TooManyFaces(Exception):
 class NoFaces(Exception):
     pass
 
-def get_landmarks(im):
-    rects = detector(im, 1)
-    '''
-    if len(rects) > 1:
-        raise TooManyFaces
-    '''
-    if len(rects) == 0:
-        raise NoFaces
-
-    return numpy.matrix([[p.x, p.y] for p in predictor(im, rects[0]).parts()])
-
-def get_landmarks1(im):
-    rects = detector(im, 1)
-    '''
-    if len(rects) > 1:
-        raise TooManyFaces
-    '''
-    if len(rects) == 0:
-        raise NoFaces
-
-    return numpy.matrix([[p.x, p.y] for p in predictor(im, rects[1]).parts()])
 
 def annotate_landmarks(im, landmarks):
     im = im.copy()
@@ -178,21 +158,6 @@ def transformation_from_points(points1, points2):
                                        c2.T - (s2 / s1) * R * c1.T)),
                          numpy.matrix([0., 0., 1.])])
 
-def read_im_and_landmarks(fname):
-    im = cv2.imread(fname, cv2.IMREAD_COLOR)
-    im = cv2.resize(im, (im.shape[1] * SCALE_FACTOR,
-                         im.shape[0] * SCALE_FACTOR))
-    s = get_landmarks(im)
-
-    return im, s
-
-def read_im_and_landmarks1(fname):
-    im = cv2.imread(fname, cv2.IMREAD_COLOR)
-    im = cv2.resize(im, (im.shape[1] * SCALE_FACTOR,
-                         im.shape[0] * SCALE_FACTOR))
-    s = get_landmarks1(im)
-
-    return im, s
 
 def warp_im(im, M, dshape):
     output_im = numpy.zeros(dshape, dtype=im.dtype)
@@ -229,6 +194,7 @@ for filename in glob.glob('*.jpg'):
     rects = detector(im, 1)
     if len(rects) < 2:
         print filename + " is missing two faces. skipping."
+        shutil.copyfile(filename, 'output/' + filename)
         continue
     if rects[0].left() < rects[1].left():
         im1, landmarks1 = (im, numpy.matrix([[p.x, p.y] for p in predictor(im, rects[1]).parts()]))
@@ -250,7 +216,7 @@ for filename in glob.glob('*.jpg'):
 
     output_im = im1 * (1.0 - combined_mask) + warped_corrected_im2 * combined_mask
 
-    cv2.imwrite('outty/' + filename, output_im)
+    cv2.imwrite('output/' + filename, output_im)
     print filename + " finished, adding."
 
 
