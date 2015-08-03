@@ -197,11 +197,11 @@ for filename in glob.glob('*.jpg'):
         shutil.copyfile(filename, 'output/' + filename)
         continue
     if rects[0].left() < rects[1].left():
-        im1, landmarks1 = (im, numpy.matrix([[p.x, p.y] for p in predictor(im, rects[1]).parts()]))
-        im2, landmarks2 = (im, numpy.matrix([[p.x, p.y] for p in predictor(im, rects[0]).parts()]))
-    else:
         im1, landmarks1 = (im, numpy.matrix([[p.x, p.y] for p in predictor(im, rects[0]).parts()]))
         im2, landmarks2 = (im, numpy.matrix([[p.x, p.y] for p in predictor(im, rects[1]).parts()]))
+    else:
+        im1, landmarks1 = (im, numpy.matrix([[p.x, p.y] for p in predictor(im, rects[1]).parts()]))
+        im2, landmarks2 = (im, numpy.matrix([[p.x, p.y] for p in predictor(im, rects[0]).parts()]))
 
     M = transformation_from_points(landmarks1[ALIGN_POINTS],
                                landmarks2[ALIGN_POINTS])
