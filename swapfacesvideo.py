@@ -184,9 +184,7 @@ def correct_colours(im1, im2, landmarks1):
 
     return (im2.astype(numpy.float64) * im1_blur.astype(numpy.float64) /
                                                 im2_blur.astype(numpy.float64))
-left = 0
-firstrun = 1
-starting = 0
+
 for filename in glob.glob('*.jpg'):
     im = cv2.imread(filename, cv2.IMREAD_COLOR)
     im = cv2.resize(im, (im.shape[1] * SCALE_FACTOR,
@@ -206,15 +204,28 @@ for filename in glob.glob('*.jpg'):
     M = transformation_from_points(landmarks1[ALIGN_POINTS],
                                landmarks2[ALIGN_POINTS])
 
+    M1 = transformation_from_points(landmarks2[ALIGN_POINTS],
+                               landmarks1[ALIGN_POINTS])
+
     mask = get_face_mask(im2, landmarks2)
+    mask1 = get_face_mask(im1, landmarks1)
+    
     warped_mask = warp_im(mask, M, im1.shape)
+    warped_mask1 = warp_im(mask1, M1, im2.shape)
+    
     combined_mask = numpy.max([get_face_mask(im1, landmarks1), warped_mask],
                           axis=0)
-
+    combined_mask1 = numpy.max([get_face_mask(im2, landmarks2), warped_mask1],
+                          axis=0)
+    
     warped_im2 = warp_im(im2, M, im1.shape)
+    warped_im3 = warp_im(im1, M1, im2.shape)
+    
     warped_corrected_im2 = correct_colours(im1, warped_im2, landmarks1)
-
+    warped_corrected_im3 = correct_colours(im2, warped_im3, landmarks2)
+    
     output_im = im1 * (1.0 - combined_mask) + warped_corrected_im2 * combined_mask
+    output_im = output_im * (1.0 - combined_mask1) + warped_corrected_im3 * combined_mask1
 
     cv2.imwrite('output/' + filename, output_im)
     print filename + " finished, adding."
